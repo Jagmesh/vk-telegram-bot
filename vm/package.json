@@ -1,0 +1,14 @@
+{
+  "name": "jagmesh-vm",
+  "version": "1.0.0",
+  "description": "Selectel",
+  "main": "index.js",
+  "scripts": {
+    "configure": "bash ./pushFilesAndRun.sh",
+    "up": "bash ./composeCopyAndUp.sh",
+    "connect": "bash ./connect.sh"
+  },
+  "keywords": [],
+  "author": "Artyom Chuykov",
+  "license": "ISC"
+}

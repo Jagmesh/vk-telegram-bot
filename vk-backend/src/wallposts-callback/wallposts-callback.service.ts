@@ -3,6 +3,9 @@ import { LogService } from '../log/log.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { CacheStorageService } from '../cache-storage/cache-storage.service';
 import { CACHE_KEYS } from './wallpost-callback.constants';
+import { VK } from 'vk-io';
+import { VkService } from '../vk/vk.service';
+import * as process from 'process';
 
 @Injectable()
 export class WallpostsCallbackService {
@@ -10,22 +13,37 @@ export class WallpostsCallbackService {
     private readonly logService: LogService,
     private readonly telegram: TelegramService,
     private readonly cache: CacheStorageService,
+    private readonly vk: VkService,
   ) {
     this.logService.setScope('WALLPOSTS_CALLBACK');
   }
 
-  async sendMsg(@Body() body: IWallPost) {
+  async sendMsg(@Body() body: IWallPost): Promise<void> {
     this.logService.write(`Получили новый запрос! \n Полученный полный объект запроса: ${JSON.stringify(body)}`);
+    const userId = body.object.created_by;
 
     this.telegram.create(process.env.TELEGRAM_BOT_API_TOKEN, process.env.TELEGRAM_CHAT_ID, process.env.TELEGRAM_ADMIN_USER_ID);
 
-    if (body.object.post_type !== 'post') {
-      this.logService.write(`Получили post_type: ${body.object.post_type}. Пропускаем`);
+    const userIsDon = await this.vk.checkIfDonById(userId, process.env.VK_GROUP_ID);
+    if (userIsDon && body.object.post_type === 'suggest') {
+      this.logService.write(`Пост в предложке от Дона (id ${userId}). Отправляем уведомление`);
+
+      const userFullName = await this.vk.getUserFullName(userId);
+
+      await this.vk.sendMessage(`Дон ${userFullName} (id ${userId}) отправил пост в предложку: \n\n` + `${body.object.text}`, 30152694, {
+        attachment: `doc${body.object.attachments[0].doc.owner_id}_${body.object.attachments[0].doc.id}`,
+      });
+
       return;
     }
 
     if (body.object.donut.is_donut) {
-      this.logService.write(`Получили is_donut: ${body.object.donut.is_donut}. Пропускаем`);
+      this.logService.write(`Получили пост для донов (is_donut: ${body.object.donut.is_donut}). Пропускаем`);
+      return;
+    }
+
+    if (body.object.post_type !== 'post') {
+      this.logService.write(`Получили post_type: ${body.object.post_type}. Пропускаем`);
       return;
     }
 

@@ -21,6 +21,7 @@ interface IWallPost {
     is_favorite: boolean;
     owner_id: number;
     post_type: 'suggest' | 'post';
+    signer_id: number;
     text: string;
   };
 }
@@ -28,16 +29,16 @@ interface IWallPost {
 interface IAttachments {
   type: string;
   doc: {
-    id: 665441350;
-    owner_id: 30152694;
+    id: number;
+    owner_id: number;
     title: string;
-    size: 9581662;
+    size: number;
     ext: string;
-    date: 1690130819;
-    type: 3;
+    date: number;
+    type: number;
     url: string;
     preview: {};
-    is_unsafe: 0;
+    is_unsafe: number;
     access_key: string;
   };
   style: string;

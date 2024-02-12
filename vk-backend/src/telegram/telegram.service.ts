@@ -12,15 +12,15 @@ export class TelegramService {
     this.logService.setScope('TELEGRAM');
   }
 
-  create(apiToken: string, chatID: string, adminID: string) {
+  create(apiToken: string, chatID: string, adminID: string): void {
     this.telegram = new Telegram(apiToken);
     this.chatID = chatID;
     this.adminID = adminID;
   }
 
-  async sendMessage(text: string) {
+  async sendMessage(text: string, chatId: string): Promise<void> {
     try {
-      await this.telegram.sendMessage(this.chatID, text, {
+      await this.telegram.sendMessage(chatId, text, {
         parse_mode: 'HTML',
       });
     } catch (error) {
@@ -28,7 +28,7 @@ export class TelegramService {
     }
   }
 
-  async sendSticker(file_id: string) {
+  async sendSticker(file_id: string): Promise<void> {
     try {
       await this.telegram.sendSticker(this.chatID, file_id);
     } catch (error) {
@@ -36,17 +36,11 @@ export class TelegramService {
     }
   }
 
-  async sendAlert(text: string) {
-    try {
-      await this.telegram.sendMessage(this.adminID, text, {
-        parse_mode: 'HTML',
-      });
-    } catch (error) {
-      this.logService.error(`Ошибка: ${error}`);
-    }
+  async sendAlert(text: string): Promise<void> {
+    await this.sendMessage(text, this.adminID);
   }
 
-  async sendDocument(url: string, caption: string, resend: boolean) {
+  async sendDocument(url: string, caption: string, resend: boolean): Promise<void> {
     try {
       await this.telegram.sendDocument(this.chatID, url, {
         caption,

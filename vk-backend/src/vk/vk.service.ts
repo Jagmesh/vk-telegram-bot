@@ -1,18 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { VK } from 'vk-io';
-import { DonutIsDonParams } from 'vk-io/lib/api/schemas/params';
-import { IVkSendMessageOptions } from './vk.interface';
+import { IVkSendMessageOptions } from './vk.interfaces';
+import { ConfigService } from '@nestjs/config';
+import { LogService } from '../log/log.service';
+import { CROCODILES_BOOM_GIF_LIST } from './vk.consts';
 
 @Injectable()
 export class VkService {
   private readonly vkMain: VK;
   private readonly vkNotify: VK;
-  constructor() {
+  constructor(private readonly configService: ConfigService, private readonly logService: LogService) {
+    this.logService.setScope('VK');
+
     this.vkMain = new VK({
-      token: process.env.VK_MAIN_GROUP_API_TOKEN,
+      token: this.configService.get<string>('VK_MAIN_GROUP_API_TOKEN'),
     });
     this.vkNotify = new VK({
-      token: process.env.VK_NOTIFICATION_GROUP_API_TOKEN,
+      token: this.configService.get<string>('VK_NOTIFICATION_GROUP_API_TOKEN'),
     });
   }
 
@@ -34,12 +38,31 @@ export class VkService {
     return `${first_name} ${last_name}`;
   }
 
-  async sendMessage(message: string, user_id: number, options?: IVkSendMessageOptions): Promise<void> {
-    await this.vkNotify.api.messages.send({
-      message,
-      user_id,
-      attachment: options?.attachment ?? undefined,
-      random_id: Math.round(Math.random() * 1000),
+  async sendMessage(message: string, receiverUserId: number | number[], options?: IVkSendMessageOptions): Promise<void> {
+    const userIds = Array.isArray(receiverUserId) ? [...receiverUserId] : [receiverUserId];
+    this.logService.write(`Отправляем сообщение. Получатели (${userIds.length}): ${userIds.join(', ')}`);
+
+    for (const userIdElement of userIds) {
+      await this.vkNotify.api.messages.send({
+        message,
+        user_id: userIdElement,
+        attachment: options?.attachment ?? undefined,
+        random_id: Math.round(Math.random() * 1000),
+      });
+    }
+  }
+
+  async listenToIncomingMessages(): Promise<void> {
+    this.vkMain.updates.on('message_new', async (context) => {
+      if (context.peerType === 'chat') {
+        return this.logService.write('Получили peerType === chat. Игнорируем');
+      }
+
+      await context.sendDocuments({
+        value: CROCODILES_BOOM_GIF_LIST[Math.floor(Math.random() * CROCODILES_BOOM_GIF_LIST.length)],
+      });
     });
+
+    await this.vkMain.updates.start();
   }
 }

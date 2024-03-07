@@ -3,9 +3,8 @@ import { LogService } from '../log/log.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { CacheStorageService } from '../cache-storage/cache-storage.service';
 import { CACHE_KEYS } from './wallpost-callback.constants';
-import { VK } from 'vk-io';
 import { VkService } from '../vk/vk.service';
-import * as process from 'process';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class WallpostsCallbackService {
@@ -14,6 +13,7 @@ export class WallpostsCallbackService {
     private readonly telegram: TelegramService,
     private readonly cache: CacheStorageService,
     private readonly vk: VkService,
+    private readonly configService: ConfigService,
   ) {
     this.logService.setScope('WALLPOSTS_CALLBACK');
   }
@@ -22,17 +22,30 @@ export class WallpostsCallbackService {
     this.logService.write(`Получили новый запрос! \n Полученный полный объект запроса: ${JSON.stringify(body)}`);
     const userId = body.object.created_by;
 
-    this.telegram.create(process.env.TELEGRAM_BOT_API_TOKEN, process.env.TELEGRAM_CHAT_ID, process.env.TELEGRAM_ADMIN_USER_ID);
+    this.telegram.create(
+      this.configService.get<string>('TELEGRAM_BOT_API_TOKEN'),
+      this.configService.get<string>('TELEGRAM_CHAT_ID'),
+      this.configService.get<string>('TELEGRAM_ADMIN_USER_ID'),
+    );
 
-    const userIsDon = await this.vk.checkIfDonById(userId, process.env.VK_GROUP_ID);
+    const userIsDon = await this.vk.checkIfDonById(userId, this.configService.get<string>('VK_GROUP_ID'));
     if (userIsDon && body.object.post_type === 'suggest') {
       this.logService.write(`Пост в предложке от Дона (id ${userId}). Отправляем уведомление`);
 
       const userFullName = await this.vk.getUserFullName(userId);
 
-      await this.vk.sendMessage(`Дон ${userFullName} (id ${userId}) отправил пост в предложку: \n\n` + `${body.object.text}`, 30152694, {
-        attachment: `doc${body.object.attachments[0].doc.owner_id}_${body.object.attachments[0].doc.id}`,
-      });
+      const receiverUserIds = this.configService
+        .get<string>('DON_ALERTS_USER_IDS', '30152694')
+        .split(',')
+        .map((value) => Number(value));
+
+      await this.vk.sendMessage(
+        `Дон ${userFullName} (id ${userId}) отправил пост в предложку: \n\n` + `${body.object.text}`,
+        receiverUserIds,
+        {
+          attachment: `doc${body.object.attachments[0].doc.owner_id}_${body.object.attachments[0].doc.id}`,
+        },
+      );
 
       return;
     }

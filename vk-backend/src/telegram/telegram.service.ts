@@ -1,26 +1,28 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { Telegram } from 'telegraf';
+import { Telegraf } from 'telegraf';
 import { LogService } from '../log/log.service';
+import { MESSAGE_ID_PREFIX } from '../telegraf-bot/telegraf-bot.consts';
+import { CacheStorageService } from '../cache-storage/cache-storage.service';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class TelegramService {
-  telegram: Telegram;
-  chatID: string;
-  adminID: string;
+  private _telegraf: Telegraf;
+  private _chatID: string;
+  private _adminID: string;
 
-  constructor(private readonly logService: LogService) {
+  constructor(private readonly logService: LogService, private readonly cache: CacheStorageService) {
     this.logService.setScope('TELEGRAM');
   }
 
   create(apiToken: string, chatID: string, adminID: string): void {
-    this.telegram = new Telegram(apiToken);
-    this.chatID = chatID;
-    this.adminID = adminID;
+    this._telegraf = new Telegraf(apiToken);
+    this._chatID = chatID;
+    this._adminID = adminID;
   }
 
   async sendMessage(text: string, chatId: string): Promise<void> {
     try {
-      await this.telegram.sendMessage(chatId, text, {
+      await this._telegraf.telegram.sendMessage(chatId, text, {
         parse_mode: 'HTML',
       });
     } catch (error) {
@@ -28,23 +30,24 @@ export class TelegramService {
     }
   }
 
-  async sendSticker(file_id: string): Promise<void> {
-    try {
-      await this.telegram.sendSticker(this.chatID, file_id);
-    } catch (error) {
-      this.logService.error(`Ошибка: ${error}`);
-    }
-  }
+  // async sendSticker(file_id: string): Promise<void> {
+  //   try {
+  //     await this.telegraf.telegram.sendSticker(this.chatID, file_id);
+  //   } catch (error) {
+  //     this.logService.error(`Ошибка: ${error}`);
+  //   }
+  // }
 
   async sendAlert(text: string): Promise<void> {
-    await this.sendMessage(text, this.adminID);
+    await this.sendMessage(text, this._adminID);
   }
 
   async sendDocument(url: string, caption: string, resend: boolean): Promise<void> {
     try {
-      await this.telegram.sendDocument(this.chatID, url, {
+      const { message_id } = await this._telegraf.telegram.sendDocument(this._chatID, url, {
         caption,
       });
+      await this.cache.set(`${MESSAGE_ID_PREFIX}_${message_id}`, { text: caption });
     } catch (error) {
       const errMessage = `Ошибка: ${error}. Ссылка на файл: ${url}`;
       this.logService.error(errMessage);
@@ -59,5 +62,9 @@ export class TelegramService {
         });
       }
     }
+  }
+
+  get telegraf() {
+    return this._telegraf;
   }
 }

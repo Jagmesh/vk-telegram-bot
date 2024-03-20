@@ -39,11 +39,15 @@ export class WallpostsCallbackService {
         .split(',')
         .map((value) => Number(value));
 
+      const attachment = body.object.attachments[0]?.doc
+        ? `doc${body.object.attachments[0].doc.owner_id}_${body.object.attachments[0].doc.id}`
+        : undefined;
+
       await this.vk.sendMessage(
         `Дон ${userFullName} (id ${userId}) отправил пост в предложку: \n\n` + `${body.object.text}`,
         receiverUserIds,
         {
-          attachment: `doc${body.object.attachments[0].doc.owner_id}_${body.object.attachments[0].doc.id}`,
+          attachment,
         },
       );
 
@@ -67,13 +71,13 @@ export class WallpostsCallbackService {
 
     await this.telegram.sendAlert(JSON.stringify(body, null, 2));
 
-    const samePostId = await this.cache.get(`${CACHE_KEYS.EVENT_ID}_${body.event_id}`);
-    if (samePostId) {
-      this.logService.error(`Пост с таким id (${body.event_id}) уже был. Пропускаем`);
-      await this.telegram.sendAlert(`Пост с таким id (${body.event_id}) уже был. Пропускаем`);
-      return;
-    }
-    await this.cache.set(`${CACHE_KEYS.EVENT_ID}_${body.event_id}`, true);
+    // const samePostId = await this.cache.get(`${CACHE_KEYS.EVENT_ID}_${body.event_id}`);
+    // if (samePostId) {
+    //   this.logService.error(`Пост с таким id (${body.event_id}) уже был. Пропускаем`);
+    //   await this.telegram.sendAlert(`Пост с таким id (${body.event_id}) уже был. Пропускаем`);
+    //   return;
+    // }
+    // await this.cache.set(`${CACHE_KEYS.EVENT_ID}_${body.event_id}`, true);
 
     if (!body.object.attachments.length) {
       this.logService.error(`В посте нет вложений. Пропускаем`);

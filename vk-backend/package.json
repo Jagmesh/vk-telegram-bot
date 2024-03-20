@@ -30,10 +30,12 @@
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "cache-manager": "^5.2.3",
+    "cache-manager-memcached-store": "^6.0.1",
+    "memcache-pp": "^0.3.3",
     "node-telegram-bot-api": "^0.61.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
-    "telegraf": "^4.12.2",
+    "telegraf": "^4.16.3",
     "vk-io": "^4.9.1"
   },
   "devDependencies": {
@@ -43,7 +45,6 @@
     "@types/express": "^4.17.13",
     "@types/jest": "29.5.0",
     "@types/node": "18.15.11",
-    "@types/node-telegram-bot-api": "^0.61.6",
     "@types/supertest": "^2.0.11",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",

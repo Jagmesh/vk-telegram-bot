@@ -2,7 +2,7 @@ import { Injectable, Scope } from '@nestjs/common';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class LogService {
-  scope: string;
+  private scope: string;
   setScope(scope: string) {
     this.scope = scope;
   }
@@ -15,7 +15,7 @@ export class LogService {
     console.log(`[${this.getLocalDate()}]: \x1b[31m[ERROR]\x1b[0m\x1b[35m[${this.scope}]\x1b[0m ${message}`);
   }
 
-  getLocalDate() {
+  private getLocalDate() {
     const date = new Date();
     date.setHours(date.getHours() + 3);
     return date.toJSON().slice(0, -5).replace(/T/, ' ');

@@ -9,6 +9,7 @@ import { TelegrafBotModule } from './telegraf-bot/telegraf-bot.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LogModule } from './log/log.module';
 import { APP_FILTER } from '@nestjs/core';
+import { ConverterModule } from './converter/converter.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { APP_FILTER } from '@nestjs/core';
     VkChatBotModule,
     TelegrafBotModule,
     LogModule,
+    ConverterModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

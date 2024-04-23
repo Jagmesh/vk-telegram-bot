@@ -29,14 +29,18 @@
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
+    "@types/fluent-ffmpeg": "^2.1.24",
+    "axios": "^1.6.8",
     "cache-manager": "^5.2.3",
     "cache-manager-memcached-store": "^6.0.1",
+    "fluent-ffmpeg": "^2.1.2",
     "memcache-pp": "^0.3.3",
     "node-telegram-bot-api": "^0.61.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
     "telegraf": "^4.16.3",
-    "vk-io": "^4.9.1"
+    "vk-io": "^4.9.1",
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",

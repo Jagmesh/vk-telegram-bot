@@ -1,0 +1,22 @@
+version: '3.7'
+services:
+  vk-backend:
+    image: jagmesh/vk-backend:latest
+    container_name: vk-back
+    ports:
+      - "80:1337"
+    environment:
+      - NODE_ENV=production
+    restart: on-failure
+  telegram-book-bot:
+    image: cr.selcloud.ru/jagmesh-vm/telegram-book-bot:latest
+    container_name: book-bot
+    ports:
+      - "1402:1402"
+    restart: on-failure
+  memcached:
+    image: memcached:1.6.9
+    container_name: memcached
+    ports:
+      - "11211:11211"
+    restart: on-failure

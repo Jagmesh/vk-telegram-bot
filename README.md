@@ -1,1 +1,1 @@
-# VK -> Telegram bot integration on NestJS
+# VK ↔ Telegram bot integration on NestJS

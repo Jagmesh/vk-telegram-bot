@@ -40,17 +40,16 @@ export class TelegrafBotService {
 
       if (!ctx.messageReactionCount || !ctx.messageReactionCount.reactions) return;
 
-      const customReactionCount = ctx.messageReactionCount.reactions.find((el) => {
+      const customReactions = ctx.messageReactionCount.reactions.filter((el) => {
         // @ts-ignore // in reality custom_emoji_id exists
-        return el.type?.custom_emoji_id === VALID_CUSTOM_EMOJI_ENUM.CROCODILE_SMILE;
+        return el.type?.custom_emoji_id in VALID_CUSTOM_EMOJI_ENUM;
       });
-      if (!customReactionCount) return;
-      this.logService.write(
-        `Number of crocodile (${VALID_CUSTOM_EMOJI_ENUM.CROCODILE_SMILE}) reactions on post: ${customReactionCount.total_count}`,
-      );
+      if (!customReactions || !customReactions.length) return;
+      const customReactionsTotalCount = customReactions.map((el) => el.total_count).reduce((acc, curr) => acc + curr, 0);
+      this.logService.write(`Number of crocodiles reactions on post: ${customReactionsTotalCount}`);
 
       const reactionsGoal: number = Number(this.configService.get('TELEGRAM_POST_REACTIONS_GOAL', 200));
-      if (customReactionCount.total_count < reactionsGoal) return;
+      if (customReactionsTotalCount < reactionsGoal) return;
       this.logService.write(`Post with ${messageId} id reached a reactions number goal!`);
 
       const postData = await this.cache.get(`${MESSAGE_ID_PREFIX}_${ctx.messageReactionCount.message_id}`);

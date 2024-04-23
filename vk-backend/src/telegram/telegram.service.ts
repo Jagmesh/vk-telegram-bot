@@ -26,7 +26,7 @@ export class TelegramService {
         parse_mode: 'HTML',
       });
     } catch (error) {
-      this.logService.error(`Ошибка: ${error}`);
+      this.logService.error(`Error: ${error}`);
     }
   }
 
@@ -49,11 +49,11 @@ export class TelegramService {
       });
       await this.cache.set(`${MESSAGE_ID_PREFIX}_${message_id}`, { text: caption });
     } catch (error) {
-      const errMessage = `Ошибка: ${error}. Ссылка на файл: ${url}`;
+      const errMessage = `Error: ${error}. File url: ${url}`;
       this.logService.error(errMessage);
       await this.sendAlert(errMessage);
       if (resend) {
-        this.logService.write('Отправляем запрос повторно');
+        this.logService.write('Resending request');
         await new Promise<void>((resolve) => {
           setTimeout(async () => {
             await this.sendDocument(url, caption, false);

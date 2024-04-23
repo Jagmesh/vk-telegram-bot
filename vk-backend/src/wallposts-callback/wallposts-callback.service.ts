@@ -29,6 +29,7 @@ export class WallpostsCallbackService {
     );
 
     const userIsDon = await this.vk.checkIfDonById(userId, this.configService.get<string>('VK_GROUP_ID'));
+    this.logService.write(`Пост от Дона? — ${userIsDon}`);
     if (userIsDon && body.object.post_type === 'suggest') {
       this.logService.write(`Пост в предложке от Дона (id ${userId}). Отправляем уведомление`);
 

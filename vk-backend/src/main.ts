@@ -1,12 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { TelegrafBotService } from './telegraf-bot/telegraf-bot.service';
+import { VkChatBotService } from './vk-chat-bot/vk-chat-bot.service';
 
 async function bootstrap() {
   const port = process.env.PORT || 1337;
   const app = await NestFactory.create(AppModule);
 
-  // await app.get(VkChatBotService).start();
+  await app.get(VkChatBotService).start();
   app.get(TelegrafBotService).hookOnChannelReactions();
 
   await app.listen(port);

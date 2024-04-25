@@ -1,34 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import * as ytdl from 'ytdl-core';
-import { Translit } from '../common/utils/transliterator';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { LogService } from '../log/log.service';
 import { ConfigService } from '@nestjs/config';
-import { ConverterError } from './converter.error';
-import * as process from 'process';
+import { YtdlService } from '../ytdl/ytdl.service';
+import { IVideoMetadata, videoConverterType } from './converter.types';
+import { ContextDefaultState, MessageContext } from 'vk-io';
+import axios from 'axios';
 
 @Injectable()
 export class ConverterService {
-  constructor(private readonly logService: LogService, private readonly configService: ConfigService) {
+  constructor(
+    private readonly logService: LogService,
+    private readonly configService: ConfigService,
+    private readonly ytdlService: YtdlService,
+  ) {
     this.logService.setScope('CONVERTER');
   }
-  async mp4ToGif(url: string): Promise<{ videoTitle: string; filePath: string }> {
-    const videoInfo = await ytdl.getBasicInfo(url);
 
-    if (!videoInfo?.videoDetails?.title) throw new ConverterError('Нет названия видео');
-    const videoMaxLength = Number(this.configService.get('YOUTUBE_MAX_LENGTH'));
-    if (Number(videoInfo.videoDetails.lengthSeconds) > videoMaxLength) {
-      throw new ConverterError(`Видео не должно быть больше ${videoMaxLength} секунд по длительности`);
+  async getVideoMetadata(type: videoConverterType, url: string, context: MessageContext<ContextDefaultState>): Promise<IVideoMetadata> {
+    if (type === 'youtube') return this.ytdlService.getVideoData(url);
+
+    if (type === 'vkAttachment') {
+      const videoTitle = context.getAttachments('doc')[0].title;
+      const filePath = `downloaded/${videoTitle}.gif`;
+
+      const response = await axios.get(url, { responseType: 'stream' });
+      const readableStream = response.data;
+
+      return {
+        readableStream: readableStream,
+        videoTitle,
+        filePath,
+      };
     }
-    const videoTitle = Translit.ruToEng(videoInfo.videoDetails.title);
-    this.logService.write(`Original title: ${videoInfo?.videoDetails?.title}. Changed title: ${videoTitle}`);
+  }
 
+  async mp4ToGif({ readableStream, filePath, videoTitle }: IVideoMetadata): Promise<{
+    videoTitle: string;
+    filePath: string;
+  }> {
     if (this.configService.get('NODE_ENV') !== 'production') ffmpeg.setFfmpegPath('C:/ffmpeg/bin/ffmpeg.exe');
 
-    const filePath = `downloaded/${videoTitle}.gif`;
-
     return new Promise((resolve, reject) => {
-      ffmpeg(ytdl(url))
+      ffmpeg(readableStream)
         .output(filePath)
         .on('error', (err) => {
           this.logService.error('Failed file processing');

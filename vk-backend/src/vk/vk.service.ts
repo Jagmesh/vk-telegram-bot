@@ -8,6 +8,7 @@ import { LogService } from '../log/log.service';
 export class VkService {
   private readonly _vkMain: VK;
   private readonly _vkNotify: VK;
+
   constructor(private readonly configService: ConfigService, private readonly logService: LogService) {
     this.logService.setScope('VK');
 

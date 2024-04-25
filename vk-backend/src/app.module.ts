@@ -10,6 +10,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { LogModule } from './log/log.module';
 import { APP_FILTER } from '@nestjs/core';
 import { ConverterModule } from './converter/converter.module';
+import { YtdlModule } from './ytdl/ytdl.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ConverterModule } from './converter/converter.module';
     TelegrafBotModule,
     LogModule,
     ConverterModule,
+    YtdlModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

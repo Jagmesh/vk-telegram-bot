@@ -24,28 +24,45 @@ export class VkChatBotService {
     this.vkService.vk.updates.on('message_new', async (context) => {
       if (context.peerType === 'chat') return;
       if (!context.text && !context.attachments) return;
-      // console.log(context)
 
       if (context.text) {
-        const url = context.text;
-        const youtubeUrlRegexp =
-          /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-        if (!youtubeUrlRegexp.test(url)) return this.logService.error('Provided text doesnt match youtube url regexp');
-
-        return await this.processVideo(url, 'youtube', context);
+        return await this.handleTextMessage(context.text, context);
       }
 
-      if (context.attachments) {
-        console.log(context.attachments[0]);
-        return await this.processVideo(context.getAttachments('doc')[0].url, 'vkAttachment', context);
-      }
+      // if (context.attachments) {
+      //   console.log(context.attachments[0]);
+      //   return await this.processVideo(context.getAttachments('doc')[0].url, 'vkAttachment', context);
+      // }
     });
 
     await this.vkService.vk.updates.start();
   }
 
+  private async handleTextMessage(text: string, context: MessageContext<ContextDefaultState>) {
+    if (text.startsWith('/')) return await this.handleTextCommands(text.replace(/[^a-zA-Z]/g, ''), context);
+
+    const url = context.text;
+    const youtubeUrlRegexp =
+      /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    if (!youtubeUrlRegexp.test(url)) return this.logService.error('Provided text doesnt match youtube url regexp');
+
+    return await this.processVideo(url, 'youtube', context);
+  }
+
+  private async handleTextCommands(command: string, context: MessageContext<ContextDefaultState>) {
+    if (command === 'help') {
+      return await context.send(
+        'ГИФКОБОТ\n\n• Пока что доступен варик только с видосами с ютуба\n' +
+          '• Чтобы получить гифку достаточно просто скинуть ссылку на видос на ютубе\n' +
+          '• Важно, чтобы ссылка была как текст, а не как вложение\n' +
+          `• Пока что есть ограничение по длительности в ${this.configService.get('YOUTUBE_MAX_LENGTH')} секунд`,
+      );
+    }
+    return await context.send('Нет такой команды! Попробуй /help');
+  }
+
   private async processVideo(url: string, type: videoConverterType, context: MessageContext<ContextDefaultState>) {
-    await context.send('Запрос получен');
+    await context.send('Запрос получен. Пожалуйста, подожди. Обработка видео может занять до 3 минут');
 
     const videoData = await this.converterService
       .getVideoMetadata(type, url, context)

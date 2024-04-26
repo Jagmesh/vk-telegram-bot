@@ -43,6 +43,7 @@ export class ConverterService {
 
     return new Promise((resolve, reject) => {
       ffmpeg(readableStream)
+        .complexFilter('fps=20,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=32[p];[s1][p]paletteuse=dither=bayer')
         .output(filePath)
         .on('error', (err) => {
           this.logService.error('Failed file processing');

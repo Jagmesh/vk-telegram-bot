@@ -4,7 +4,9 @@ services:
     image: jagmesh/vk-backend:latest
     container_name: vk-container
     ports:
-      - "80:1337"  
+      - "80:1337"
+    environment:
+      - NODE_ENV=production
     restart: always
   gifnot:
     image: garageorder/vkgifnot:latest

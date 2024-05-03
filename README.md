@@ -2,6 +2,14 @@
 
 ### Chatbot, posts duplication from VK to TG, TG reactions counter and more
 
-`npm i`
+***
 
-`npm start`
+### Install and run
+
+```shell
+npm i
+
+npm start
+```
+
+##### check `.env` file for app configuration

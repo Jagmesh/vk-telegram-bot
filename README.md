@@ -9,7 +9,7 @@
 ```shell
 npm i
 
-npm start
+npm run start
 ```
 
 ##### check `.env` file for app configuration

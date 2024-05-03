@@ -9,6 +9,6 @@ done < .env
 
 ssh root@$hostvm "mkdir /home/scripts/";
 scp .env root@$hostvm:/home/scripts/;
-scp ./installDocker.sh root@$hostvm:/home/scripts/;
+scp ./install-docker.sh root@$hostvm:/home/scripts/;
 
-ssh root@$hostvm "bash /home/scripts/installDocker.sh";
+ssh root@$hostvm "bash /home/scripts/install-docker-v2.sh";

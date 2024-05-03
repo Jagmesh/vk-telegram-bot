@@ -1,6 +1,6 @@
 import * as internal from 'stream';
 
-export type videoConverterType = 'youtube' | 'vkAttachment';
+export type videoConverterType = 'youtube' | 'vkVideo' | 'vkAttachment';
 
 export interface IVideoMetadata {
   readableStream: internal.Readable;

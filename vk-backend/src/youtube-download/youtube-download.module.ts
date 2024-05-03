@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { YtdlService } from './ytdl.service';
+import { YoutubeDownloadService } from './youtube-download.service';
 import { LogModule } from '../log/log.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [LogModule, ConfigModule],
-  providers: [YtdlService],
-  exports: [YtdlService],
+  providers: [YoutubeDownloadService],
+  exports: [YoutubeDownloadService],
 })
-export class YtdlModule {}
+export class YoutubeDownloadModule {}

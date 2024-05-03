@@ -7,7 +7,7 @@ import { LogService } from '../log/log.service';
 @Injectable()
 export class VkService {
   private readonly _vkMain: VK;
-  private readonly _vkNotify: VK;
+  private readonly _vkUser: VK;
 
   constructor(private readonly configService: ConfigService, private readonly logService: LogService) {
     this.logService.setScope('VK');
@@ -15,8 +15,9 @@ export class VkService {
     this._vkMain = new VK({
       token: this.configService.get<string>('VK_MAIN_GROUP_API_TOKEN'),
     });
-    this._vkNotify = new VK({
-      token: this.configService.get<string>('VK_NOTIFICATION_GROUP_API_TOKEN'),
+    this._vkUser = new VK({
+      token:
+        'vk1.a.-YwnAuYpDYLE2p2WSO99g4XyIV_JwiA66QzY9dNak9t9b2LOHG6JS3QvzwWaYPAZo31frre7IF_mSJgKQfWNoNhNa8QT3ECeRCnvv_ndZ7F3uy9qq11nJtsl-ZSEH4Jb-UYbaXMuOc1730UzYFdl-vatCceBNWc7Q4God1ijhAJBJsIXbOqCg_yOhgHgot-Jj-_MP8xAAQWpzpdE1enZog',
     });
   }
 
@@ -43,7 +44,7 @@ export class VkService {
     this.logService.write(`Отправляем сообщение. Получатели (${userIds.length}): ${userIds.join(', ')}`);
 
     for (const userIdElement of userIds) {
-      await this._vkNotify.api.messages.send({
+      await this._vkMain.api.messages.send({
         message,
         user_id: userIdElement,
         attachment: options?.attachment ?? undefined,
@@ -54,5 +55,9 @@ export class VkService {
 
   public get vk(): VK {
     return this._vkMain;
+  }
+
+  public get vkUser(): VK {
+    return this._vkUser;
   }
 }

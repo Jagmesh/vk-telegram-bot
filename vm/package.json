@@ -4,9 +4,9 @@
   "description": "Selectel",
   "main": "index.js",
   "scripts": {
-    "configure": "bash ./pushFilesAndRun.sh",
-    "up": "bash ./composeCopyAndUp.sh",
-    "connect": "bash ./connect.sh"
+    "configure": "bash push-files-and-run.sh",
+    "up": "bash compose-copy-and-up.sh",
+    "connect": "bash connect.sh"
   },
   "keywords": [],
   "author": "Artyom Chuykov",

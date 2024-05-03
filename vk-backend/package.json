@@ -1,6 +1,6 @@
 {
-  "name": "vk-backend",
-  "version": "0.0.2",
+  "name": "vk-tg-backend",
+  "version": "0.0.3",
   "description": "",
   "author": "",
   "private": true,
@@ -34,12 +34,14 @@
     "cache-manager": "^5.2.3",
     "cache-manager-memcached-store": "^6.0.1",
     "fluent-ffmpeg": "^2.1.2",
+    "fluent-ffmpeg-7": "^2.1.5",
     "memcache-pp": "^0.3.3",
     "node-telegram-bot-api": "^0.61.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
     "telegraf": "^4.16.3",
     "vk-io": "^4.9.1",
+    "yt-dlp-wrap": "^2.3.12",
     "ytdl-core": "^4.11.5"
   },
   "devDependencies": {

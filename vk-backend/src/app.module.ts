@@ -8,9 +8,9 @@ import { VkChatBotModule } from './vk-chat-bot/vk-chat-bot.module';
 import { TelegrafBotModule } from './telegraf-bot/telegraf-bot.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LogModule } from './log/log.module';
-import { APP_FILTER } from '@nestjs/core';
 import { ConverterModule } from './converter/converter.module';
-import { YtdlModule } from './ytdl/ytdl.module';
+import { YoutubeDownloadModule } from './youtube-download/youtube-download.module';
+import { YtDlpModule } from './yt-dlp/yt-dlp.module';
 
 @Module({
   imports: [
@@ -20,8 +20,6 @@ import { YtdlModule } from './ytdl/ytdl.module';
     VkChatBotModule,
     TelegrafBotModule,
     LogModule,
-    ConverterModule,
-    YtdlModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

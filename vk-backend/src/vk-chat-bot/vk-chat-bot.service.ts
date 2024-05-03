@@ -6,7 +6,7 @@ import { ConverterService } from '../converter/converter.service';
 import { ConverterError } from '../converter/converter.error';
 import { ConfigService } from '@nestjs/config';
 import { ContextDefaultState, MessageContext } from 'vk-io';
-import { YtdlService } from '../ytdl/ytdl.service';
+import { YoutubeDownloadService } from '../youtube-download/youtube-download.service';
 import { videoConverterType } from '../converter/converter.types';
 
 @Injectable()
@@ -29,8 +29,19 @@ export class VkChatBotService {
         return await this.handleTextMessage(context.text, context);
       }
 
+      const links = context.getAttachments('link');
+      if (links && links.length) {
+        const link = links[0];
+        return await this.handleTextMessage(link.url, context);
+      }
+
+      const videos = context.getAttachments('video');
+      if (videos && videos.length) {
+        const video = videos[0];
+        return await this.processVideo(`${video.ownerId}_${video.id}_${video.accessKey}`, 'vkVideo', context);
+      }
+
       // if (context.attachments) {
-      //   console.log(context.attachments[0]);
       //   return await this.processVideo(context.getAttachments('doc')[0].url, 'vkAttachment', context);
       // }
     });
@@ -41,12 +52,10 @@ export class VkChatBotService {
   private async handleTextMessage(text: string, context: MessageContext<ContextDefaultState>) {
     if (text.startsWith('/')) return await this.handleTextCommands(text.replace(/[^a-zA-Z]/g, ''), context);
 
-    const url = context.text;
-    const youtubeUrlRegexp =
-      /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    if (!youtubeUrlRegexp.test(url)) return this.logService.error('Provided text doesnt match youtube url regexp');
+    const youtubeUrlRegexp = /^(https?:\/\/)?((www\.)?youtube\.com|youtu\.be)\/.+$/;
+    if (!youtubeUrlRegexp.test(text)) return this.logService.error('Provided text doesnt match youtube url regexp');
 
-    return await this.processVideo(url, 'youtube', context);
+    return await this.processVideo(text, 'youtube', context);
   }
 
   private async handleTextCommands(command: string, context: MessageContext<ContextDefaultState>) {
@@ -55,7 +64,7 @@ export class VkChatBotService {
         'ГИФКОБОТ\n\n• Пока что доступен варик только с видосами с ютуба\n' +
           '• Чтобы получить гифку достаточно просто скинуть ссылку на видос на ютубе\n' +
           '• Важно, чтобы ссылка была как текст, а не как вложение\n' +
-          `• Пока что есть ограничение по длительности в ${this.configService.get('YOUTUBE_MAX_LENGTH')} секунд`,
+          `• Пока что есть ограничение по длительности в ${this.configService.get('VIDEO_MAX_DURATION')} секунд`,
       );
     }
     return await context.send('Нет такой команды! Попробуй /help');
@@ -68,7 +77,7 @@ export class VkChatBotService {
       .getVideoMetadata(type, url, context)
       .then((res) => res)
       .catch(async (err) => {
-        this.logService.error(err);
+        this.logService.error(`Error occurred while geting video metadata: ${err}`);
         if (err instanceof ConverterError) await context.send(err.message);
       });
     if (!videoData) {

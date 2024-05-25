@@ -1,8 +1,9 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { Telegraf } from 'telegraf';
 import { LogService } from '../log/log.service';
-import { MESSAGE_ID_PREFIX } from '../telegraf-bot/telegraf-bot.consts';
 import { CacheStorageService } from '../cache-storage/cache-storage.service';
+import { defer, retry } from 'rxjs';
+import { MESSAGE_ID_PREFIX } from '../telegraf-bot/telegraf-bot.consts';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class TelegramService {
@@ -42,26 +43,23 @@ export class TelegramService {
     await this.sendMessage(text, this._adminID);
   }
 
-  async sendDocument(url: string, caption: string, resend: boolean): Promise<void> {
-    try {
-      const { message_id } = await this._telegraf.telegram.sendDocument(this._chatID, url, {
+  async sendDocument(url: string, caption: string): Promise<void> {
+    defer(() =>
+      this._telegraf.telegram.sendDocument(this._chatID, url, {
         caption,
+      }),
+    )
+      .pipe(retry({ count: 3, delay: 5 * 1000 }))
+      .subscribe({
+        next: async (value) => {
+          if (value?.message_id) await this.cache.set(`${MESSAGE_ID_PREFIX}_${value.message_id}`, { text: caption });
+        },
+        error: (error) => {
+          const errMessage = `Error: ${error}. File url: ${url}`;
+          this.logService.error(errMessage);
+          this.sendAlert(errMessage);
+        },
       });
-      await this.cache.set(`${MESSAGE_ID_PREFIX}_${message_id}`, { text: caption });
-    } catch (error) {
-      const errMessage = `Error: ${error}. File url: ${url}`;
-      this.logService.error(errMessage);
-      await this.sendAlert(errMessage);
-      if (resend) {
-        this.logService.write('Resending request');
-        await new Promise<void>((resolve) => {
-          setTimeout(async () => {
-            await this.sendDocument(url, caption, false);
-            resolve();
-          }, 5000);
-        });
-      }
-    }
   }
 
   get telegraf() {

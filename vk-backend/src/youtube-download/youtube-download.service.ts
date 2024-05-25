@@ -12,29 +12,30 @@ export class YoutubeDownloadService {
   }
 
   async getVideoData(url: string) {
-    this.logService.write(`YOUTUBE_REQUEST_COOKIES: ${this.configService.get('YOUTUBE_REQUEST_COOKIES').slice(0, 100)}`);
-    this.logService.write(`YOUTUBE_ID_TOKEN: ${this.configService.get('YOUTUBE_ID_TOKEN')}`);
-    const videoInfo = await ytdl
-      .getBasicInfo(url, {
-        requestOptions: {
-          headers: {
-            cookie: this.configService.get<string>('YOUTUBE_REQUEST_COOKIES'),
-            'x-youtube-identity-token': this.configService.get<string>('YOUTUBE_ID_TOKEN'),
-          },
-        },
-      })
-      .then((res) => res)
-      .catch((err) => this.logService.error(err));
-    if (!videoInfo) return;
+    // this.logService.write(`YOUTUBE_REQUEST_COOKIES: ${this.configService.get('YOUTUBE_REQUEST_COOKIES').slice(0, 100)}`);
+    // this.logService.write(`YOUTUBE_ID_TOKEN: ${this.configService.get('YOUTUBE_ID_TOKEN')}`);
+    // const videoInfo = await ytdl
+    //   .getBasicInfo(url, {
+    //     requestOptions: {
+    //       headers: {
+    //         cookie: this.configService.get<string>('YOUTUBE_REQUEST_COOKIES'),
+    //         'x-youtube-identity-token': this.configService.get<string>('YOUTUBE_ID_TOKEN'),
+    //       },
+    //     },
+    //   })
+    //   .then((res) => res)
+    //   .catch((err) => this.logService.error(err));
+    // if (!videoInfo) return;
+    //
+    // if (!videoInfo?.videoDetails?.title) throw new ConverterError('Нет названия видео');
+    // const videoMaxLength = Number(this.configService.get('VIDEO_MAX_DURATION'));
+    // if (Number(videoInfo.videoDetails.lengthSeconds) > videoMaxLength) {
+    //   throw new ConverterError(`Видео не должно быть больше ${videoMaxLength} секунд по длительности`);
+    // }
+    // const videoTitle = Translit.ruToEng(videoInfo.videoDetails.title);
+    // this.logService.write(`Original title: ${videoInfo?.videoDetails?.title}. Changed title: ${videoTitle}`);
 
-    if (!videoInfo?.videoDetails?.title) throw new ConverterError('Нет названия видео');
-    const videoMaxLength = Number(this.configService.get('VIDEO_MAX_DURATION'));
-    if (Number(videoInfo.videoDetails.lengthSeconds) > videoMaxLength) {
-      throw new ConverterError(`Видео не должно быть больше ${videoMaxLength} секунд по длительности`);
-    }
-    const videoTitle = Translit.ruToEng(videoInfo.videoDetails.title);
-    this.logService.write(`Original title: ${videoInfo?.videoDetails?.title}. Changed title: ${videoTitle}`);
-
+    const videoTitle = `test_gif_${Math.round(Math.random() * 1000)}`;
     const filePath = `downloaded/${videoTitle}.gif`;
 
     return { readableStream: ytdl(url), filePath, videoTitle };

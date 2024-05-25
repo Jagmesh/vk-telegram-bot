@@ -1,10 +1,11 @@
-import { Body, Injectable } from '@nestjs/common';
+import { Body, Inject, Injectable } from '@nestjs/common';
 import { LogService } from '../log/log.service';
 import { TelegramService } from '../telegram/telegram.service';
 import { CacheStorageService } from '../cache-storage/cache-storage.service';
-import { CACHE_KEYS } from './wallpost-callback.constants';
 import { VkService } from '../vk/vk.service';
-import { ConfigService } from '@nestjs/config';
+import { ConfigService, ConfigType } from '@nestjs/config';
+import mainGlobalConfig from '../common/config/main-global.config';
+import { addIdToPostponedPostText } from './wallposts-callback.helper';
 
 @Injectable()
 export class WallpostsCallbackService {
@@ -14,6 +15,8 @@ export class WallpostsCallbackService {
     private readonly cache: CacheStorageService,
     private readonly vk: VkService,
     private readonly configService: ConfigService,
+    @Inject(mainGlobalConfig.KEY)
+    private readonly mainConfig: ConfigType<typeof mainGlobalConfig>,
   ) {
     this.logService.setScope('WALLPOSTS_CALLBACK');
   }
@@ -87,8 +90,38 @@ export class WallpostsCallbackService {
 
     for (const element of body.object.attachments) {
       if (element.doc && body.object.text) {
-        await this.telegram.sendDocument(element.doc.url, body.object.text, true);
+        await this.telegram.sendDocument(element.doc.url, body.object.text);
       }
     }
+  }
+
+  async checkPostponesWallPost(wallPost: IWallPost) {
+    const postId = wallPost?.object?.id;
+    if (!postId) return this.logService.error('There is no post id in callback');
+
+    const post = await this.vk.vkUser.api.wall.getById({ posts: `-${this.mainConfig.VK_GROUP_ID}_${postId}` });
+    if (!post) return this.logService.error(`No post with id of ${postId} was found`);
+    if (!post?.items[0] || !post?.items[0]?.text || !post?.items[0]?.attachments[0])
+      return this.logService.error(`No text or attachments in post with id of ${postId}`);
+    const postText = post.items[0].text;
+    this.logService.write(`Received post text: "${postText}"`);
+
+    if (!postText.includes(this.mainConfig.VK_UNPUBLISHED_TAG))
+      return this.logService.write(`No unpublished tag ${this.mainConfig.VK_UNPUBLISHED_TAG} in post with id of ${postId}`);
+    if (postText.includes(`${this.mainConfig.VK_UNPUBLISHED_TAG}_`))
+      return this.logService.write(`We have already marked this post with id of ${postId}`);
+    const modifiedPostText = addIdToPostponedPostText(postText, this.mainConfig.VK_UNPUBLISHED_TAG, Math.round(Math.random() * 1000));
+
+    const attachment = post.items[0].attachments[0];
+    const finalAttachmentString = `${attachment.type}${attachment.doc.owner_id}_${attachment.doc.id}`;
+
+    this.logService.write(`Final attachment string: ${finalAttachmentString}`);
+    await this.vk.vkUser.api.wall.edit({
+      post_id: postId,
+      owner_id: -`${this.mainConfig.VK_GROUP_ID}`,
+      publish_date: post.items[0].date,
+      message: modifiedPostText,
+      attachments: finalAttachmentString,
+    });
   }
 }

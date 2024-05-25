@@ -1,5 +1,6 @@
 export class Translit {
   private static maxTextLength = 25;
+
   static ruToEng(string: string): string {
     const lettersMap = {
       а: 'a',

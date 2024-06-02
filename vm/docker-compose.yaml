@@ -1,20 +1,20 @@
 services:
   vk-backend:
-    image: jagmesh/vk-backend:latest
+    image: cr.selcloud.ru/jagmesh-vm/vk-tg-bot:latest
     container_name: vk-back
     ports:
       - "80:1337"
     environment:
       - NODE_ENV=production
     restart: always
-#  telegram-book-bot:
-#    image: cr.selcloud.ru/jagmesh-vm/telegram-book-bot:latest
-#    container_name: book-bot
-#    ports:
-#      - "1402:1402"
-#    restart: always
+  telegram-book-bot:
+    image: cr.selcloud.ru/jagmesh-vm/telegram-book-bot:latest
+    container_name: book-bot
+    ports:
+      - "1402:1402"
+    restart: always
   memcached:
-    image: memcached:1.6.9
+    image: mirror.gcr.io/memcached:1.6.9
     container_name: memcached
     ports:
       - "11211:11211"

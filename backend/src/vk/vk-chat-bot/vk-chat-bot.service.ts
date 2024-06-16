@@ -4,10 +4,11 @@ import { LogService } from '../../log/log.service';
 import { ConverterService } from '../../converter/converter.service';
 import mainGlobalConfig from '../../common/config/main-global.config';
 import { ConfigType } from '@nestjs/config';
-import { videoConverterType } from '../../converter/converter.types';
 import { ContextDefaultState, MessageContext } from 'vk-io';
-import { ConverterError } from '../../converter/converter.error';
 import * as fs from 'fs';
+import { YtDlpService } from '../../yt-dlp/yt-dlp.service';
+import { videoConverterType } from '../../yt-dlp/yt-dlp.interface';
+import { VkChatResponse } from './vk-chat-bot.vk-response';
 
 @Injectable()
 export class VkChatBotService {
@@ -17,30 +18,27 @@ export class VkChatBotService {
     private readonly converterService: ConverterService,
     @Inject(mainGlobalConfig.KEY)
     private readonly mainConfig: ConfigType<typeof mainGlobalConfig>,
+    private readonly ytdlpservice: YtDlpService,
   ) {
     this.logService.setScope('VK_CHAT_BOT');
   }
 
-  public async processVideo(url: string, type: videoConverterType, context: MessageContext<ContextDefaultState>) {
-    await context.send('Запрос получен. Пожалуйста, подожди. Обработка видео может занять до 3 минут');
-
-    const videoData = await this.converterService
-      .getVideoMetadata(type, url, context)
+  public async processVideo(url: string, type: videoConverterType, context: MessageContext<ContextDefaultState>): Promise<VkChatResponse> {
+    const videoData = await this.ytdlpservice
+      .getVideoInfo(type, url, context)
       .then((res) => res)
-      .catch(async (err) => {
+      .catch((err) => {
         this.logService.error(`Error occurred while geting video metadata: ${err}`);
-        if (err instanceof ConverterError) await context.send(err.message);
+        throw err;
       });
-    if (!videoData) return await this.failedToProcessVideoHandler(context);
 
     const conversionResult = await this.converterService
       .mp4ToGif(videoData)
       .then((res) => res)
-      .catch(async (err) => {
+      .catch((err) => {
         this.logService.error(`Error occurred while converting videoStream to gif: ${err}`);
-        if (err instanceof ConverterError) await context.send(err.message);
+        throw err;
       });
-    if (!conversionResult) return await this.failedToProcessVideoHandler(context);
     const { videoTitle, filePath } = conversionResult;
 
     this.logService.write('File is ready. Sending');
@@ -48,7 +46,7 @@ export class VkChatBotService {
       group_id: this.mainConfig.VK_GROUP_ID,
       source: {
         value: filePath,
-        filename: `gifntext_${videoTitle}.gif`,
+        filename: `SGINKN_${videoTitle}.gif`,
       },
     });
     this.logService.write('File has been successfully uploaded to VK. Sending to user');
@@ -59,13 +57,6 @@ export class VkChatBotService {
     });
     this.logService.write('File sent successfully');
     fs.unlink(filePath, (err) => (err ? this.logService.error(err.message) : ''));
-    await context.send('Ржыте наз доровье!');
-  }
-
-  private async failedToProcessVideoHandler(context: MessageContext<ContextDefaultState>) {
-    await context.send(
-      'Не удалось обработать видео\n\nЕсли это youtube видео, то, скорее всего, проблема во временных сетевых ограничениях от самого youtube ¯_(ツ)_/¯',
-    );
-    return this.logService.error('Failed to process video conversion');
+    return new VkChatResponse('🐊 Ржыте наз доровье!');
   }
 }

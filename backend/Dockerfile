@@ -1,4 +1,4 @@
-FROM mirror.gcr.io/node:20
+FROM node:20
 
 RUN apt-get update -y
 RUN apt-get upgrade -y

@@ -1,3 +1,5 @@
+export type videoConverterType = 'youtube' | 'vkVideo' | 'vkAttachment' | 'commonUrl';
+
 export interface IYtDlpJsonDump {
   id: '2lLZedgFJsw';
   title: 'Hydrogen Bomb vs Orphanage. Epic Rap Battles of History';

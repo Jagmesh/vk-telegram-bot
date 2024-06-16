@@ -14,7 +14,7 @@ services:
       - "1402:1402"
     restart: always
   memcached:
-    image: mirror.gcr.io/memcached:1.6.9
+    image: memcached:1.6.9
     container_name: memcached
     ports:
       - "11211:11211"

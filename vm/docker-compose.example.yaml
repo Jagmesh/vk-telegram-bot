@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   vk-backend:
-    image: jagmesh/vk-backend:latest
+    image: url/vk-backend:latest
     container_name: vk-container
     ports:
       - "80:1337"
@@ -9,7 +9,7 @@ services:
       - NODE_ENV=production
     restart: always
   gifnot:
-    image: garageorder/vkgifnot:latest
+    image: url/vkgifnot:latest
     container_name: gifnot-container
     environment:
       - GIF_TOKEN=enter_token
@@ -17,8 +17,14 @@ services:
       - NOTIFIED_USERS=enter_user_ids
     restart: always
   telegram-book-bot:
-    image: cr.selcloud.ru/jagmesh-vm/telegram-book-bot:latest
+    image: url/telegram-book-bot:latest
     container_name: book-bot
     ports:
       - "1402:1402"
+    restart: always
+  memcached:
+    image: memcached:1.6.9
+    container_name: memcached
+    ports:
+      - "11211:11211"
     restart: always

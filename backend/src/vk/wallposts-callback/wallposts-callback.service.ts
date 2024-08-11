@@ -65,8 +65,6 @@ export class WallpostsCallbackService {
       return;
     }
 
-    await this.telegram.sendAlert(JSON.stringify(body, null, 2));
-
     if (!body.object.attachments.length) {
       this.logService.error(`В посте нет вложений. Пропускаем`);
       return;

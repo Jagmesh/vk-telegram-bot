@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   vk-backend:
     image: url/vk-backend:latest

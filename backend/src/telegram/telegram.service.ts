@@ -29,14 +29,6 @@ export class TelegramService {
     }
   }
 
-  // async sendSticker(file_id: string): Promise<void> {
-  //   try {
-  //     await this.telegraf.telegram.sendSticker(this.chatID, file_id);
-  //   } catch (error) {
-  //     this.logService.error(`Ошибка: ${error}`);
-  //   }
-  // }
-
   async sendAlert(text: string): Promise<void> {
     await this.sendMessage(text, this._adminID);
   }

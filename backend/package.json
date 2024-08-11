@@ -33,6 +33,7 @@
     "axios": "^1.6.8",
     "cache-manager": "^5.2.3",
     "cache-manager-memcached-store": "^6.0.1",
+    "cheerio": "^1.0.0-rc.12",
     "fluent-ffmpeg": "^2.1.2",
     "fluent-ffmpeg-7": "^2.1.5",
     "memcache-pp": "^0.3.3",

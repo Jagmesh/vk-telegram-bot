@@ -1,10 +1,10 @@
 import { VALID_CUSTOM_EMOJI_ENUM } from './telegraf-bot.consts';
 
-export function checkIfCustomEmoji(emojiId: string): boolean {
-  if (!emojiId) return false;
+export function findCustomEmoji(emojiId: string): keyof typeof VALID_CUSTOM_EMOJI_ENUM | null {
+  if (!emojiId) return null;
 
-  for (const emojiElement in VALID_CUSTOM_EMOJI_ENUM) {
-    if (VALID_CUSTOM_EMOJI_ENUM[emojiElement] === emojiId) return true;
+  for (const emojiKey in VALID_CUSTOM_EMOJI_ENUM) {
+    if (VALID_CUSTOM_EMOJI_ENUM[emojiKey] === emojiId) return emojiKey as keyof typeof VALID_CUSTOM_EMOJI_ENUM;
   }
-  return false;
+  return null;
 }

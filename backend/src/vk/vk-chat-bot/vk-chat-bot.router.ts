@@ -48,9 +48,10 @@ export class VkChatBotRouter {
         replyData = await this.processVideo(`${video.ownerId}_${video.id}_${video.accessKey}`, 'vkVideo', context);
       }
 
-      // if (context.attachments) {
-      //   replyData = await this.processVideo(context.getAttachments('doc')[0].url, 'vkAttachment', context);
-      // }
+      const docs = context.getAttachments('doc');
+      if (docs && docs.length) {
+        replyData = await this.processVideo(docs[0].url, 'vkAttachment', context);
+      }
 
       if (replyData) await context.send(replyData.reply.text, replyData.reply.params || undefined);
     });

@@ -7,6 +7,8 @@
 ### Install and run
 
 ```shell
+cd ./backend
+
 npm i
 
 npm run start

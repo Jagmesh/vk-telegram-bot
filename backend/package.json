@@ -1,6 +1,6 @@
 {
   "name": "vk-tg-backend",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "",
   "author": "",
   "private": true,
@@ -24,12 +24,14 @@
     "dockerUpVM": "npm run dockerUp && cd ./../vm && npm run up"
   },
   "dependencies": {
+    "@nestjs-plus/rabbitmq": "^1.4.4",
     "@nestjs/cache-manager": "^2.2.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@types/fluent-ffmpeg": "^2.1.24",
+    "amqplib": "^0.10.4",
     "axios": "^1.6.8",
     "cache-manager": "^5.2.3",
     "cache-manager-memcached-store": "^6.0.1",

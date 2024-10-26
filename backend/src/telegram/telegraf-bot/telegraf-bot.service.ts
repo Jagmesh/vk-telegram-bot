@@ -8,6 +8,7 @@ import { TelegramService } from '../telegram.service';
 import { CacheStorageService } from '../../cache-storage/cache-storage.service';
 import { VkService } from '../../vk/vk.service';
 import { ReactionTypeCustomEmoji } from '@telegraf/types/manage';
+import { getPostIdRecordKey } from '../../vk/wallposts-callback/wallposts-callback.util';
 
 @Injectable()
 export class TelegrafBotService {
@@ -32,10 +33,11 @@ export class TelegrafBotService {
     this.telegramService.telegraf.on('message_reaction_count', async (ctx) => {
       const messageId = ctx?.messageReactionCount?.message_id;
 
-      if (!ctx.messageReactionCount || !ctx.messageReactionCount.reactions) return;
+      if (!messageId || !ctx.messageReactionCount || !ctx.messageReactionCount.reactions) return;
+      console.log(messageId, ctx.messageReactionCount.reactions);
 
       const customReactions = ctx.messageReactionCount.reactions.filter((el) => {
-        return findCustomEmoji((el?.type as ReactionTypeCustomEmoji).custom_emoji_id);
+        return (el?.type as ReactionTypeCustomEmoji).custom_emoji_id;
       });
       if (!customReactions || !customReactions.length) return;
       this.logService.write(
@@ -57,10 +59,10 @@ export class TelegrafBotService {
       if (customReactionsTotalCount < reactionsGoal) return;
       this.logService.write(`Post with ${messageId} id reached a reactions number goal!`);
 
-      const postData = await this.cache.get<ITgToVkCachedData>(`${MESSAGE_ID_PREFIX}_${ctx.messageReactionCount.message_id}`);
+      const postData = await this.cache.get<ITgToVkCachedData>(getPostIdRecordKey(ctx.messageReactionCount.message_id));
       this.logService.write(`postData: ${JSON.stringify(postData)}`);
       if (!postData) return;
-      await this.cache.del(`${MESSAGE_ID_PREFIX}_${ctx.messageReactionCount.message_id}`);
+      await this.cache.del(getPostIdRecordKey(ctx.messageReactionCount.message_id));
 
       await this.telegramService.sendAlert(
         `Пост с id ${ctx.messageReactionCount.message_id} набрал нужное кол-во крокодилов в ${reactionsGoal} штук!` +
@@ -70,7 +72,7 @@ export class TelegrafBotService {
 
       await this.vk.vkUser.api.wall.post({
         post_id: postData.vkPostId,
-        owner_id: -`${this.mainConfig.VK_GROUP_ID}`
+        owner_id: -`${this.mainConfig.VK_GROUP_ID}`,
       });
     });
 

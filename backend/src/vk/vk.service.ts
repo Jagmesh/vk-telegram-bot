@@ -34,11 +34,12 @@ export class VkService {
   }
 
   public async getUserFullName(user_id: number): Promise<string> {
-    const { first_name, last_name } = (
-      await this._vkMain.api.users.get({
-        user_ids: [user_id],
-      })
-    )[0];
+    const res = await this._vkMain.api.users.get({
+      user_ids: [user_id],
+    });
+    if (!res || !res.length) return null;
+    const { first_name, last_name } = res[0];
+    if (!first_name || !last_name) return null;
 
     return `${first_name} ${last_name}`;
   }

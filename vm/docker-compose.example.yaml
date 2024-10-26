@@ -7,23 +7,27 @@ services:
     environment:
       - NODE_ENV=production
     restart: always
-  gifnot:
-    image: url/vkgifnot:latest
-    container_name: gifnot-container
-    environment:
-      - GIF_TOKEN=enter_token
-      - NOTIFIER_TOKEN=enter_token
-      - NOTIFIED_USERS=enter_user_ids
-    restart: always
-  telegram-book-bot:
-    image: url/telegram-book-bot:latest
-    container_name: book-bot
-    ports:
-      - "1402:1402"
-    restart: always
   memcached:
     image: memcached:1.6.9
     container_name: memcached
     ports:
       - "11211:11211"
     restart: always
+  rabbitmq:
+    image: heidiks/rabbitmq-delayed-message-exchange
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: AH723uj12ko0_1
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    command: >
+      bash -c "
+        rabbitmq-plugins enable --offline rabbitmq_management;
+        rabbitmq-plugins enable --offline rabbitmq_delayed_message_exchange;
+        rabbitmq-server"
+volumes:
+  rabbitmq_data:

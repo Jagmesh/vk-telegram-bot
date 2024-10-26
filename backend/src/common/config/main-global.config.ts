@@ -14,8 +14,12 @@ export default registerAs('mainGlobal', () => ({
         .reduce((previousValue, currentValue) => previousValue * currentValue)
     : null,
 
+  RABBIT_MQ_HOST: process.env.RABBIT_MQ_HOST,
+  RABBIT_MQ_PORT: Number(process.env.RABBIT_MQ_PORT) || 5672,
+  RABBIT_MQ_USER_NAME: process.env.RABBIT_MQ_USER_NAME,
+  RABBIT_MQ_PASSWORD: process.env.RABBIT_MQ_PASSWORD,
+
   VK_MAIN_GROUP_API_TOKEN: process.env.VK_MAIN_GROUP_API_TOKEN,
-  //VK_NOTIFICATION_GROUP_API_TOKEN: process.env.VK_NOTIFICATION_GROUP_API_TOKEN,
   VK_APP_API_TOKEN: process.env.VK_APP_API_TOKEN,
   VK_GROUP_ID: Number(process.env.VK_GROUP_ID),
   VK_DON_ALERTS_USER_IDS: process.env.VK_DON_ALERTS_USER_IDS || '30152694',

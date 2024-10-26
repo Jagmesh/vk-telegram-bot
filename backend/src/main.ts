@@ -15,7 +15,10 @@ async function bootstrap() {
 
   const port = mainConfig.APP_PORT;
   await app.listen(port);
-  await app.resolve(LogService).then((log) => log.setScope('BOOTSTRAP').write(`Launched at ${port} port`));
+  await app.resolve(LogService).then((log) => {
+    log.setScope('BOOTSTRAP').write(`Launched at ${port} port`);
+    log.write(`Running in ${mainConfig.NODE_ENV.toUpperCase()} mode`);
+  });
 }
 
 bootstrap();

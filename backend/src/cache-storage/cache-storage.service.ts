@@ -9,6 +9,10 @@ export class CacheStorageService {
     this.logService.setScope('CACHE_STORAGE');
   }
 
+  async getKeys(pattern?: string): Promise<string[]> {
+    return this.cache.store.keys(pattern);
+  }
+
   async get<T>(key): Promise<T> {
     this.logService.write(`Getting data from ${key}`);
     return JSON.parse(await this.cache.get(key));

@@ -48,3 +48,7 @@ interface ITgToVkCachedData {
   vkPostId: number;
   text: string;
 }
+
+interface DelayedDeletionPostMsg {
+  telegramPostId: number;
+}

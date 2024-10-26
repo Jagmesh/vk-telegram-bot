@@ -9,15 +9,21 @@ import { WallpostsCallbackModule } from './vk/wallposts-callback/wallposts-callb
 import { CacheStorageModule } from './cache-storage/cache-storage.module';
 import { VkChatBotModule } from './vk/vk-chat-bot/vk-chat-bot.module';
 import { TelegrafBotModule } from './telegram/telegraf-bot/telegraf-bot.module';
+import { MessageQueueModule } from './message-queue/message-queue.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, load: [mainGlobalConfig] }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [mainGlobalConfig],
+      envFilePath: process.env.NODE_ENV === 'production' ? '.env.prod.env' : '.env.dev.env',
+    }),
     WallpostsCallbackModule,
     CacheStorageModule,
     VkChatBotModule,
     TelegrafBotModule,
     LogModule,
+    MessageQueueModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

@@ -5,7 +5,10 @@ import { CacheStorageService } from '../../cache-storage/cache-storage.service';
 import { VkService } from '../vk.service';
 import mainGlobalConfig from '../../common/config/main-global.config';
 import { ConfigType } from '@nestjs/config';
-import { MESSAGE_ID_PREFIX } from '../../telegram/telegraf-bot/telegraf-bot.consts';
+import { addAuthorNameToMsg, getPostIdRecordKey } from './wallposts-callback.util';
+import { RabbitSubscribe } from '@nestjs-plus/rabbitmq';
+import { DELAYED_MESSAGE_EXCHANGE_NAME } from '../../message-queue/message-queue.const';
+import { MessageQueueService } from '../../message-queue/message-queue.service';
 
 @Injectable()
 export class WallpostsCallbackService {
@@ -16,6 +19,7 @@ export class WallpostsCallbackService {
     private readonly vk: VkService,
     @Inject(mainGlobalConfig.KEY)
     private readonly mainConfig: ConfigType<typeof mainGlobalConfig>,
+    private readonly messageQueue: MessageQueueService,
   ) {
     this.logService.setScope('WALLPOSTS_CALLBACK');
 
@@ -39,15 +43,13 @@ export class WallpostsCallbackService {
         ? `doc${body.object.attachments[0].doc.owner_id}_${body.object.attachments[0].doc.id}`
         : undefined;
 
-      await this.vk.sendMessage(
+      return await this.vk.sendMessage(
         `Дон ${userFullName} (id ${userId}) отправил пост в предложку: \n\n` + `${body.object.text}`,
         receiverUserIds,
         {
           attachment,
         },
       );
-
-      return;
     }
 
     if (body.object.donut.is_donut) {
@@ -81,6 +83,34 @@ export class WallpostsCallbackService {
   }
 
   async checkPostponesWallPost(wallPost: IWallPost) {
+    const validationRes = await this.validatePostponedWallPost(wallPost);
+    if (!validationRes) return;
+    const { postId, post, postText, attachment } = validationRes;
+
+    const telegramPostId = await this.telegram.sendDocument(attachment.doc.url, postText);
+    if (!telegramPostId) return this.logService.error(`No telegram post id received`);
+    await this.cache.set<ITgToVkCachedData>(getPostIdRecordKey(telegramPostId), {
+      vkPostId: postId,
+      text: postText,
+    });
+
+    const modifiedPostText = postText.replace(this.mainConfig.VK_UNPUBLISHED_TAG, this.mainConfig.VK_UNPUBLISHED_PROCESSED_TAG);
+    const finalAttachmentString = `${attachment.type}${attachment.doc.owner_id}_${attachment.doc.id}`;
+
+    this.logService.write(`Final attachment string: ${finalAttachmentString}`);
+    await this.vk.vkUser.api.wall.edit({
+      post_id: postId,
+      owner_id: -`${this.mainConfig.VK_GROUP_ID}`,
+      publish_date: post.items[0].date,
+      message: modifiedPostText,
+      attachments: finalAttachmentString,
+      copyright: `https://t.me/${this.mainConfig.TELEGRAM_CHAT_ID.slice(1)}/${telegramPostId}`,
+    });
+
+    await this.messageQueue.scheduleDelayedMessage<DelayedDeletionPostMsg>({ telegramPostId }, this.mainConfig.MEMCACHED_DEFAULT_TTL);
+  }
+
+  async validatePostponedWallPost(wallPost: IWallPost) {
     const postId = wallPost?.object?.id;
     if (!postId) return this.logService.error('There is no post id in callback');
 
@@ -96,23 +126,33 @@ export class WallpostsCallbackService {
     if (postText.includes(`${this.mainConfig.VK_UNPUBLISHED_PROCESSED_TAG}`))
       return this.logService.write(`We have already marked this post with id of ${postId}`);
 
-    const telegramPostId = await this.telegram.sendDocument(attachment.doc.url, postText);
-    if (!telegramPostId) return this.logService.error(`No telegram post id received`);
-    await this.cache.set<ITgToVkCachedData>(`${MESSAGE_ID_PREFIX}_${telegramPostId}`, {
-      vkPostId: postId,
-      text: postText,
-    });
+    console.log(post.items[0]);
 
-    const modifiedPostText = postText.replace(this.mainConfig.VK_UNPUBLISHED_TAG, this.mainConfig.VK_UNPUBLISHED_PROCESSED_TAG);
-    const finalAttachmentString = `${attachment.type}${attachment.doc.owner_id}_${attachment.doc.id}`;
+    const userName = await this.vk.getUserFullName(post.items[0].signer_id);
+    const modifiedPostText = userName ? addAuthorNameToMsg(postText, userName, this.mainConfig.VK_UNPUBLISHED_TAG) : postText;
 
-    this.logService.write(`Final attachment string: ${finalAttachmentString}`);
-    await this.vk.vkUser.api.wall.edit({
-      post_id: postId,
+    return { postId, post, postText: modifiedPostText, attachment };
+  }
+
+  @RabbitSubscribe({
+    exchange: DELAYED_MESSAGE_EXCHANGE_NAME,
+    routingKey: '',
+    queue: 'post_deletion_queue',
+  })
+  async deletePostPair(msg: DelayedDeletionPostMsg) {
+    console.log('telegramPostId', msg);
+    const postData = await this.cache.get<ITgToVkCachedData>(getPostIdRecordKey(msg.telegramPostId));
+    if (!postData) return this.logService.error(`No data in Cache for ${msg.telegramPostId} tg post id`);
+
+    console.log('postData', postData);
+    await this.cache.del(getPostIdRecordKey(msg.telegramPostId));
+
+    const deletionRes = await this.vk.vkUser.api.wall.delete({
+      post_id: postData.vkPostId,
       owner_id: -`${this.mainConfig.VK_GROUP_ID}`,
-      publish_date: post.items[0].date,
-      message: modifiedPostText,
-      attachments: finalAttachmentString,
     });
+    console.log('deletionRes', deletionRes);
+
+    this.logService.write(`Successfully deleted post pair: tg — ${msg.telegramPostId}, vk — ${postData.vkPostId}`);
   }
 }
